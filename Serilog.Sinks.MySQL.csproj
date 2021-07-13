@@ -7,8 +7,9 @@
     <PackageId>Serilog.Sinks.MySQL-esb</PackageId>
     <Description>修改日志table以用来兼容logdashboard</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.4</Version>
-    <PackageReleaseNotes>配置自动删除mysql 历史数据</PackageReleaseNotes>
+    <Version>1.0.5</Version>
+    <PackageReleaseNotes>配置自动删除mysql 历史数据,创建表新增索引</PackageReleaseNotes>
+    <NeutralLanguage />
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
