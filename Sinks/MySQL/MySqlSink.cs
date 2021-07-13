@@ -151,7 +151,7 @@ namespace Serilog.Sinks.MySQL
                                 ? logEvent.Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fffzzz")
                                 : logEvent.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fffzzz");
 
-                            insertCommand.Parameters["@level"].Value = logEvent.Level.ToString();
+                            insertCommand.Parameters["@level"].Value = LogEventConvert(logEvent.Level);
                             insertCommand.Parameters["@msg"].Value = logMessageString;
                             insertCommand.Parameters["@LongDate"].Value = _storeTimestampInUtc
                                 ? logEvent.Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss")
@@ -196,6 +196,34 @@ namespace Serilog.Sinks.MySQL
 
                 return false;
             }
+        }
+
+        private string LogEventConvert(LogEventLevel logEventLevel)
+        {
+            try
+            {
+                switch (logEventLevel)
+                {
+                    case LogEventLevel.Verbose:
+                        return "TRACE";
+                    case LogEventLevel.Debug:
+                        return "DEBUG";
+                    case LogEventLevel.Information:
+                        return "INFO";
+                    case LogEventLevel.Warning:
+                        return "WARN";
+                    case LogEventLevel.Error:
+                        return "ERROR";
+                    case LogEventLevel.Fatal:
+                        return "FATAL";
+                }
+            }
+            catch (Exception ex)
+            {
+                SelfLog.WriteLine(ex.Message);
+                return "";
+            }
+            return "INFO";
         }
     }
 }
