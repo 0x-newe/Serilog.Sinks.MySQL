@@ -111,13 +111,17 @@ namespace Serilog.Sinks.MySQL
                 tableCommandBuilder.Append("id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,");
                 tableCommandBuilder.Append("Timestamp VARCHAR(100),");
                 tableCommandBuilder.Append("Level VARCHAR(15),");
-                tableCommandBuilder.Append("Message VARCHAR(2048),");
+                tableCommandBuilder.Append("Message text,");
                 tableCommandBuilder.Append("LongDate datetime DEFAULT NULL,");
-                tableCommandBuilder.Append("Logger varchar(128) DEFAULT NULL,");
+                tableCommandBuilder.Append("Logger varchar(1024) DEFAULT NULL,");
                 tableCommandBuilder.Append("TraceIdentifier varchar(128) DEFAULT NULL,");
-                tableCommandBuilder.Append("Exception varchar(1024),");
-                tableCommandBuilder.Append("Properties varchar(1024),");
-                tableCommandBuilder.Append("_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+                tableCommandBuilder.Append("Exception text,");
+                tableCommandBuilder.Append("Properties text,");
+                tableCommandBuilder.Append("_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+
+                tableCommandBuilder.Append($"ALTER TABLE {_tableName} ");
+                tableCommandBuilder.Append("ADD UNIQUE INDEX `id`(`id`) USING BTREE COMMENT '自增',");
+                tableCommandBuilder.Append("ADD INDEX `LongDate`(`LongDate`) USING BTREE COMMENT '时间';");
 
                 var cmd = sqlConnection.CreateCommand();
                 cmd.CommandText = tableCommandBuilder.ToString();
