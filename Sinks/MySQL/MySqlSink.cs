@@ -1,18 +1,4 @@
-﻿// Copyright 2019 Zethian Inc.
-// 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-//     http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -84,20 +70,18 @@ namespace Serilog.Sinks.MySQL
         {
             var tableCommandBuilder = new StringBuilder();
             tableCommandBuilder.Append($"INSERT INTO  {_tableName} (");
-            tableCommandBuilder.Append("Timestamp, Level, Message, LongDate,Logger,TraceIdentifier ,Exception, Properties) ");
-            tableCommandBuilder.Append("VALUES (@ts, @level, @msg,@LongDate,@Logger,@TraceIdentifier, @ex, @prop)");
+            tableCommandBuilder.Append("Level, Message, LongDate,Logger,TraceIdentifier ,Exception) ");
+            tableCommandBuilder.Append("VALUES (@level, @msg,@LongDate,@Logger,@TraceIdentifier, @ex)");
 
             var cmd = sqlConnection.CreateCommand();
             cmd.CommandText = tableCommandBuilder.ToString();
 
-            cmd.Parameters.Add(new MySqlParameter("@ts", MySqlDbType.VarChar));
             cmd.Parameters.Add(new MySqlParameter("@level", MySqlDbType.VarChar));
-            cmd.Parameters.Add(new MySqlParameter("@msg", MySqlDbType.VarChar));
+            cmd.Parameters.Add(new MySqlParameter("@msg", MySqlDbType.Text));
             cmd.Parameters.Add(new MySqlParameter("@LongDate", MySqlDbType.DateTime));
             cmd.Parameters.Add(new MySqlParameter("@Logger", MySqlDbType.VarChar));
             cmd.Parameters.Add(new MySqlParameter("@TraceIdentifier", MySqlDbType.VarChar));
-            cmd.Parameters.Add(new MySqlParameter("@ex", MySqlDbType.VarChar));
-            cmd.Parameters.Add(new MySqlParameter("@prop", MySqlDbType.VarChar));
+            cmd.Parameters.Add(new MySqlParameter("@ex", MySqlDbType.Text));
 
             return cmd;
         }
@@ -109,16 +93,12 @@ namespace Serilog.Sinks.MySQL
                 var tableCommandBuilder = new StringBuilder();
                 tableCommandBuilder.Append($"CREATE TABLE IF NOT EXISTS {_tableName} (");
                 tableCommandBuilder.Append("id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,");
-                tableCommandBuilder.Append("Timestamp VARCHAR(100),");
                 tableCommandBuilder.Append("Level VARCHAR(15),");
                 tableCommandBuilder.Append("Message text,");
                 tableCommandBuilder.Append("LongDate datetime DEFAULT NULL,");
                 tableCommandBuilder.Append("Logger varchar(1024) DEFAULT NULL,");
                 tableCommandBuilder.Append("TraceIdentifier varchar(128) DEFAULT NULL,");
-                tableCommandBuilder.Append("Exception text,");
-                tableCommandBuilder.Append("Properties text,");
-                tableCommandBuilder.Append("_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
-
+                tableCommandBuilder.Append("Exception text);");
                 tableCommandBuilder.Append($"ALTER TABLE {_tableName} ");
                 tableCommandBuilder.Append("ADD UNIQUE INDEX `id`(`id`) USING BTREE COMMENT '自增',");
                 tableCommandBuilder.Append("ADD INDEX `LongDate`(`LongDate`) USING BTREE COMMENT '时间';");
@@ -147,10 +127,6 @@ namespace Serilog.Sinks.MySQL
                             var logMessageString = new StringWriter(new StringBuilder());
                             logEvent.RenderMessage(logMessageString);
 
-                            insertCommand.Parameters["@ts"].Value = _storeTimestampInUtc
-                                ? logEvent.Timestamp.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fffzzz")
-                                : logEvent.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fffzzz");
-
                             insertCommand.Parameters["@level"].Value = LogEventConvert(logEvent.Level);
                             insertCommand.Parameters["@msg"].Value = logMessageString;
                             insertCommand.Parameters["@LongDate"].Value = _storeTimestampInUtc
@@ -177,9 +153,6 @@ namespace Serilog.Sinks.MySQL
                             logEvent.Properties.TryGetValue("RequestId", out LogEventPropertyValue requestId);
                             insertCommand.Parameters["@TraceIdentifier"].Value = (requestId as ScalarValue)?.Value ?? string.Empty;
                             insertCommand.Parameters["@ex"].Value = logEvent.Exception?.ToString() ?? string.Empty;
-                            insertCommand.Parameters["@prop"].Value = logEvent.Properties.Count > 0
-                                ? logEvent.Properties.Json()
-                                : string.Empty;
 
                             await insertCommand.ExecuteNonQueryAsync().ConfigureAwait(false);
                         }
